@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -28,7 +29,7 @@ public class Sail : MonoBehaviour
     
     Transform _transform;
     
-    [Range(1,2)]public float radian = 1.1f;
+    [Range(1,1.5f)]public float radian = 1.1f;
     public float area = 5f;
 
     // Start is called before the first frame update
@@ -43,37 +44,33 @@ public class Sail : MonoBehaviour
         // 0~360, 0 is right, increasing counterclockwise
         var sailAngle = _transform.eulerAngles.z;
         var sailLocalAngle = _transform.localEulerAngles.z;
-        var shipResistance = ShipBody.Instance.resistance;
-        Vector2 globalWindDirection = GlobalWind.Instance.direction;
-        Vector2 shipDirection = ShipBody.Instance.direction;
-        Vector2 windDirection = globalWindDirection - shipDirection;
+        var globalWindDirection = GlobalWind.Instance.direction;
+        var shipDirection = ShipBody.Instance.direction;
+        var windDirection = globalWindDirection - shipDirection;
 
         float windAngle;
         if (windDirection.x == 0)
-        {
             windAngle = windDirection.y != 0 ? 90f : 0f;
-        }
         else
-        {
-            windAngle = Mathf.Atan(windDirection.y / windDirection.x);
-        }
-        
+            windAngle = Mathf.Atan(windDirection.y / windDirection.x) * 180 / Mathf.PI;
+
         var relativeAngle = windAngle - sailAngle;
         var windSpeed = windDirection.magnitude;
 
         var liftWindSpeed = windSpeed * Mathf.Abs(Mathf.Sin(relativeAngle * Mathf.PI / 180));
         var resistanceWindSpeed = windSpeed * Mathf.Cos(relativeAngle * Mathf.PI / 180);
 
-        var lift = 0.1f * (radian * radian - 1f) * liftWindSpeed * liftWindSpeed * area;
+        var lift = (radian * radian - 1f) * liftWindSpeed * area;
         var resistance = resistanceWindSpeed * area;
         var sailPower = lift + resistance;
+        // Debug.Log($"windSpeed: {windSpeed}, lift: {lift}, resistance: {resistance}, sailPower: {sailPower}");
+        // Debug.Log($"relativeAngle: {relativeAngle}, sailAngle: {sailAngle}, windAngle: {windAngle}");
+        // Debug.Log($"{ShipBody.Instance.direction}");
+        // Debug.Log($"{ShipBody.Instance.speed}");
 
         var forwardPower = sailPower * Mathf.Cos(sailLocalAngle * Mathf.PI / 180);
 
-        ShipBody.Instance.speed += 0.1f * (forwardPower - shipResistance);
-        var shipSpeed = ShipBody.Instance.speed;
-        ShipBody.Instance.resistance = 0.1f * shipSpeed * shipSpeed;
-        
+        ShipBody.Instance.speed += (forwardPower - ShipBody.Instance.resistance) * Time.deltaTime;
         ShipBody.Instance.Move();
     }
 }

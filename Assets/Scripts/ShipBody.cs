@@ -25,37 +25,31 @@ public class ShipBody : MonoBehaviour
     }
     // Start is called before the first frame update
 
-    public float speed = 0;
+    [SerializeField] float _speed = 0;
+    public float speed
+    {
+        get => _speed;
+        set => _speed = value > 0? value: 0;
+    }
     // 0~360, 0 is right, increasing counterclockwise
-    public float angle = 0;
-    public Vector2 direction = Vector2.right;
+    public float angle
+    {
+        get => _transform.eulerAngles.z;
+        set => _transform.Rotate(0, 0, value-_transform.eulerAngles.z);
+    }
+    public Vector2 direction => new Vector2(speed * Mathf.Cos(angle * Mathf.PI / 180), speed * Mathf.Sin(angle * Mathf.PI / 180)); // speed为0时，direction也为0
     public float mass = 10f;
-    public float resistance = 0;
+    public float resistance => 0.1f * speed * speed;
 
-    Transform m_Transform;
+    Transform _transform;
 
-    public void UpdateDirection()
-    {
-        if (speed < 0) speed = 0;
-        direction = new Vector2(speed * Mathf.Cos(angle * Mathf.PI / 180), 
-            speed * Mathf.Sin(angle * Mathf.PI / 180));
-        if(Math.Abs(m_Transform.eulerAngles.z - angle) > Mathf.Epsilon)
-            m_Transform.Rotate(0, 0, angle-m_Transform.eulerAngles.z);
-    }
-
-    public void UpdateResistance()
-    {
-        resistance = 0.1f * speed * speed;
-    }
-    
     void Start()
     {
-        m_Transform = transform;
-        UpdateDirection();
+        _transform = transform;
     }
 
     public void Move()
     {
-        m_Transform.Translate(direction * Time.deltaTime);
+        _transform.Translate((Vector3)(direction * Time.deltaTime), Space.World);
     }
 }
